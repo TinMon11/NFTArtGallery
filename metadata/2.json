@@ -1,0 +1,25 @@
+{
+    "name": "Quiosco de Canaletas",
+    "description": "En esta pieza pictórica, una multiplicidad de fragmentos escénicos están contenidos en formas angulosas que se interpenetran. El uso de estas formas quebradizas que definen la dinámica del cuadro estaba también presente en las escenas de café pintadas en París.",
+    "image": "https://coleccion.malba.org.ar/wp-content/uploads/2019/05/Barradas-Quiosco-de-Canaletas-008.jpg",
+    "id": "2",
+    "attributes": [
+        {
+            "trait_type": "Purchase Price",
+            "value": 12
+        },
+        {
+            "trait_type": "Author",
+            "value": "Rafael Barradas"
+        },
+        {
+            "trait_type": "Year",
+            "value": 1918
+        },
+        {
+            "trait_type": "Tecnica",
+            "value": "Acuarela, gouache y grafito sobre papel"
+        }
+
+    ]
+}

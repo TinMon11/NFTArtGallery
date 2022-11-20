@@ -1,0 +1,25 @@
+{
+    "name": "Rompecabezas",
+    "description": "30 cuadrados de un metro de lado realizados con pintura acrílica sobre tela, que permiten ser acoplados entre ellos formando una imagen continua total.",
+    "image": "https://coleccion.malba.org.ar/wp-content/uploads/2019/05/De-la-vega-armado-ret-1.jpg ",
+    "id": "1",
+    "attributes": [
+        {
+            "trait_type": "Purchase Price",
+            "value": 10
+        },
+        {
+            "trait_type": "Author",
+            "value": "Jorge De La Vega"
+        },
+        {
+            "trait_type": "Year",
+            "value": 1969
+        },
+        {
+            "trait_type": "Tecnica",
+            "value": "Acrilico sobre tela"
+        }
+
+    ]
+}
