@@ -37,7 +37,7 @@ describe("Testing on ArtGallery Contract", function () {
 
     it(`Should Mint an NFT for another address`, async function () {
         const newAddress = signers.firstUser.address
-        const Minting = await contractInstance._publishNFT('https:www/fdsafds.com', 5, newAddress, 500);
+        const Minting = await contractInstance._publishNFT('https:www/fdsafds.com', 5, newAddress, 5000);
         const NFTAdress = contractInstance.NFTContractTokenInstance();
         const NFTContractFactory = await ethers.getContractFactory("NFTContract", signers.deployer);
         const NFTInstance = NFTContractFactory.attach(NFTAdress)
@@ -47,15 +47,15 @@ describe("Testing on ArtGallery Contract", function () {
 
     describe('Tests on Price Setting', function () {
 
-        it('Should not allow to Set Price if Setter is not the owner', async function () {
-            const contractInstanceFirstUser = await contractInstance.connect(signers.firstUser)
-            const setingPrice = contractInstanceFirstUser._setPrice(1, 3)
-            await expect(setingPrice).to.be.revertedWith('Ownable: caller is not the owner')
+        it('Should not allow to Set Price if Setter is not the owner of NFT', async function () {
+            const setingPrice = contractInstance._setPrice(1, 3)
+            await expect(setingPrice).to.be.revertedWith('Not your NFT')
         })
 
         it('Owner Could Set/Get Price', async function () {
-            const setingPrice = await contractInstance._setPrice(1, 3)
-            const getPrice = await contractInstance._getPrice(1)
+            const contractInstanceFirstUser = await contractInstance.connect(signers.firstUser)
+            const setingPrice = await contractInstanceFirstUser._setPrice(1, 3)
+            const getPrice = await contractInstanceFirstUser._getPrice(1)
             expect(getPrice).to.equal(3)
         })
     })
@@ -87,7 +87,7 @@ describe("Testing on ArtGallery Contract", function () {
             expect(contractNFTs).to.equal(2)
         })
 
-        
+
         it('Should return NFTs Quantity owned by the OTHER ADDRESS', async function () {
             const newAddress = signers.firstUser.address
             const newMintOtherAddress = await contractInstance._publishNFT('https:www/fdsafds.com', 5, newAddress, 500);
@@ -111,7 +111,7 @@ describe("Testing on ArtGallery Contract", function () {
 
     })
 
-    
+
 
 
     describe('Test on Selling/Buying', function () {
@@ -124,31 +124,46 @@ describe("Testing on ArtGallery Contract", function () {
             await expect(Buying).to.be.revertedWith('You didnt send the correct NFT Price')
         })
 
-        it('Should transfer NFT to a new address', async function () {
         
+        it('Should transfer NFT to a new address (owner other address)', async function () {
             const price = await contractInstance._getPrice(1)
-            console.log('Precio: ' + price)
-
             const NFTAdress = contractInstance.NFTContractTokenInstance();
             const NFTContractFactory = await ethers.getContractFactory("NFTContract", signers.deployer);
             const NFTInstance = NFTContractFactory.attach(NFTAdress)
-
-            const actualOwner = await NFTInstance.ownerOf(1)
-            console.log('Actual Owner: ' + actualOwner)
-            console.log('Buyer: ' + signers.secondUser.address)
-
+            
             const contractInstanceSecondUser = await contractInstance.connect(signers.secondUser)
             const Buying = await contractInstanceSecondUser._BuyNFT('1', {
                 value: ethers.utils.parseEther("3.0") / (10 ** 18)
             })
         
-            const newOwner = await NFTInstance.ownerOf(1)
-            console.log("New Owner: "+ newOwner)
+            const ethContractBalance = await contractInstance._ethContractBalance()
+            expect(ethContractBalance.toNumber()).to.equal(1)
         
         })
 
-    })
+        it('Should transfer NFT to a new address (owner gallery)', async function () {
+            const price = await contractInstance._getPrice(0)
+            const NFTAdress = contractInstance.NFTContractTokenInstance();
+            const NFTContractFactory = await ethers.getContractFactory("NFTContract", signers.deployer);
+            const NFTInstance = NFTContractFactory.attach(NFTAdress)
+            
+            let actualBalance = await contractInstance._ethContractBalance()
+
+
+            const contractInstanceSecondUser = await contractInstance.connect(signers.secondUser)
+            const Buying = await contractInstanceSecondUser._BuyNFT('0', {
+                value: ethers.utils.parseEther("4.0") / (10 ** 18)
+            })
+
+            actualBalance = parseInt(actualBalance) + parseInt(price)
+            
+            const ethContractBalance = await contractInstance._ethContractBalance()
+            expect(ethContractBalance.toNumber()).to.equal(actualBalance)
         
+        })
+        
+    })
+
 
 })
 

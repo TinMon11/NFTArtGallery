@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ERC721Token.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-
 //Tiene que tener una funcion para poder MINTEAR desde el otro contrato (con o sin address de owner)
 // Mapping con los precios de cada NFT
 // FUncion para SET PRICE / GET PRICE (Si seteas precio en 0, no está a la venta)
@@ -18,7 +17,9 @@ contract ArtGallery is ERC721, Ownable {
     NFTContract public NFTContractTokenInstance;
 
     // Smart Contract Constructor
-    constructor(string memory _tokenName, string memory _tokenSymbol) ERC721(_tokenName, _tokenSymbol){
+    constructor(string memory _tokenName, string memory _tokenSymbol)
+        ERC721(_tokenName, _tokenSymbol)
+    {
         NFTContractTokenInstance = new NFTContract("Malba Gallery", "MBG");
     }
 
@@ -38,25 +39,43 @@ contract ArtGallery is ERC721, Ownable {
     //@dev Mints a new NFT (2 functions. Owner could be the gallery or a 3rd address)
 
     //Publishing when owner is a 3rd address
-    function _publishNFT(string memory _tokenURI, uint256 _tokenPrice, address to, uint96 _feeNumerator) public onlyOwner {
-		uint256 _newTokenId = NFTContractTokenInstance._mint(_tokenURI, _feeNumerator, to);
-		_NFTPrices[_newTokenId] = _tokenPrice;
-        
-        emit mintNFTEvent(to, _newTokenId);
+    function _publishNFT(
+        string memory _tokenURI,
+        uint256 _tokenPrice,
+        address to,
+        uint96 _feeNumerator
+    ) public onlyOwner {
+        uint256 _newTokenId = NFTContractTokenInstance._mint(
+            _tokenURI,
+            _feeNumerator,
+            to
+        );
+        _NFTPrices[_newTokenId] = _tokenPrice;
 
-	}
+        emit mintNFTEvent(to, _newTokenId);
+    }
 
     //Publishing when gallery is the owner of the NFT
-	function _publishNFTGallery(string memory _tokenURI, uint256 _tokenPrice, uint96 _feeNumerator) public onlyOwner {
-		uint256 _newTokenId = NFTContractTokenInstance._mint(_tokenURI, _feeNumerator);
-		_NFTPrices[_newTokenId] = _tokenPrice;
+    function _publishNFTGallery(
+        string memory _tokenURI,
+        uint256 _tokenPrice,
+        uint96 _feeNumerator
+    ) public onlyOwner {
+        uint256 _newTokenId = NFTContractTokenInstance._mint(
+            _tokenURI,
+            _feeNumerator
+        );
+        _NFTPrices[_newTokenId] = _tokenPrice;
         emit mintNFTEvent(address(this), _newTokenId);
-
-	}
+    }
 
     // NFT Token Price Update
     //@user If price set is 0, NFT will not be on sale
-    function _setPrice(uint256 _tokenID, uint256 _newPrice) public onlyOwner {
+    function _setPrice(uint256 _tokenID, uint256 _newPrice) public {
+        require(
+            NFTContractTokenInstance.ownerOf(_tokenID) == msg.sender,
+            "Not your NFT"
+        );
         _NFTPrices[_tokenID] = _newPrice;
     }
 
@@ -94,26 +113,31 @@ contract ArtGallery is ERC721, Ownable {
     // Requiere que la galeria sea el owner del NFT obviamente
     // Emite evento de venta
     function _BuyNFT(uint256 _tokenID) public payable {
-        	uint256 _tokenPrice = _NFTPrices[_tokenID];
-            require(_tokenPrice > 0,"This NFT is not for sale");
-            require(_tokenPrice == msg.value,"You didnt send the correct NFT Price");
+        uint256 _tokenPrice = _NFTPrices[_tokenID];
+        require(_tokenPrice > 0, "This NFT is not for sale");
+        require(
+            _tokenPrice == msg.value,
+            "You didnt send the correct NFT Price"
+        );
 
-            address seller = NFTContractTokenInstance.ownerOf(_tokenID);
-            uint256 amountReceived = msg.value;
+        address buyer = msg.sender;
+        address seller = NFTContractTokenInstance.ownerOf(_tokenID);
+        uint256 amountReceived = msg.value;
 
-            safeTransferFrom(seller, msg.sender, _tokenID);
+        NFTContractTokenInstance.safeTransferFrom(seller, buyer, _tokenID);
 
-            //@dev Gets royalty for seller
-            (address royaltyReceiver, uint256 royaltyAmount) = NFTContractTokenInstance.royaltyInfo(_tokenID, _tokenPrice);
-		    uint256 sellerAmount = amountReceived - royaltyAmount;
+        //@dev Gets royalty for seller
 
-            payable(royaltyReceiver).transfer(royaltyAmount);
-		    payable(seller).transfer(sellerAmount);
+        (, uint256 royaltyAmount) = NFTContractTokenInstance.royaltyInfo(_tokenID, _tokenPrice);
+        uint256 sellerAmount = amountReceived - royaltyAmount;
 
-        	_NFTPrices[_tokenID] = 0; //Mark token no longer for sale
-    
-            emit sellEvent(msg.sender, msg.value, _tokenID);
-        
+        if (seller != address(this)) {
+            payable(seller).transfer(sellerAmount);
+        }
+
+        _NFTPrices[_tokenID] = 0; //Mark token no longer for sale
+
+        emit sellEvent(msg.sender, msg.value, _tokenID);
     }
 
     // Visualize the balance of the Smart Contract (ethers)
