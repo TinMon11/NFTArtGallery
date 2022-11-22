@@ -100,20 +100,6 @@ describe("Testing on ArtGallery Contract", function () {
 
     })
 
-
-    describe('Test on Withdrawing', function () {
-
-        it('Should not allow to Withdrwau ETH Balance if is not the owner', async function () {
-            const contractInstanceFirstUser = await contractInstance.connect(signers.firstUser)
-            const WithdrawBalance = contractInstanceFirstUser.withdraw()
-            await expect(WithdrawBalance).to.be.revertedWith('Ownable: caller is not the owner')
-        })
-
-    })
-
-
-
-
     describe('Test on Selling/Buying', function () {
 
         it('Should not allow to sell if ETH sends are incorrect', async function () {
@@ -162,6 +148,22 @@ describe("Testing on ArtGallery Contract", function () {
         
         })
         
+    })
+
+    describe('Test on Withdrawing', function () {
+
+        it('Should not allow to Withdrwau ETH Balance if is not the owner', async function () {
+            const contractInstanceFirstUser = await contractInstance.connect(signers.firstUser)
+            const WithdrawBalance = contractInstanceFirstUser.withdraw()
+            await expect(WithdrawBalance).to.be.revertedWith('Ownable: caller is not the owner')
+        })
+
+        it('Should allow owner to widthdraw ETH full amount', async function () {
+            const withdrawTx = await contractInstance.withdraw()
+            const ethContractBalance = await contractInstance._ethContractBalance()
+            expect(ethContractBalance.toNumber()).to.equal(0)
+        })
+
     })
 
 
